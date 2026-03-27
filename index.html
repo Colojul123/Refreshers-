@@ -981,7 +981,9 @@ function startSystem(){
   }, 800);
 }
 
-byId('enterBtn').addEventListener('click', startSystem);
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('enterBtn').addEventListener('click', startSystem);
+});
 setTimeout(() => {
   if(byId('introScreen')) startSystem();
 }, 3000);
