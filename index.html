@@ -146,7 +146,6 @@
   }
   .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
 
-  /* INTRO SCREEN */
   #introScreen{
     position:fixed;
     inset:0;
@@ -198,7 +197,6 @@
     filter:brightness(1.05);
   }
 
-  /* LOADING SCREEN */
   #loadingScreen{
     position:fixed;
     inset:0;
@@ -240,7 +238,7 @@
     <div class="intro-kicker">HOU2 TRAINING</div>
     <h1 class="intro-title">HOU2 REFRESHER</h1>
     <div class="intro-sub">Associate knowledge check and administrator dashboard</div>
-    <button id="enterBtn">ENTER</button>
+    <button id="enterBtn" type="button">ENTER</button>
   </div>
 </div>
 
@@ -277,7 +275,7 @@
       </div>
     </div>
     <div class="btns" style="margin-top:14px">
-      <button class="btn-green" id="startLoginBtn">Continue</button>
+      <button class="btn-green" id="startLoginBtn" type="button">Continue</button>
     </div>
     <div id="loginMsg"></div>
   </div>
@@ -287,8 +285,8 @@
       <div class="section-title">
         <h2>Administrator Dashboard</h2>
         <div class="btns">
-          <button class="btn-gray" id="adminLogoutBtn">Logout</button>
-          <button class="btn-red" id="clearResultsBtn">Clear Results</button>
+          <button class="btn-gray" id="adminLogoutBtn" type="button">Logout</button>
+          <button class="btn-red" id="clearResultsBtn" type="button">Clear Results</button>
         </div>
       </div>
       <div class="stat-grid">
@@ -327,8 +325,8 @@
             <textarea id="associateListInput"></textarea>
           </div>
           <div class="btns">
-            <button class="btn-blue" id="saveSettingsBtn">Save Settings</button>
-            <button class="btn-gray" id="resetQuestionsBtn">Reset Default Questions</button>
+            <button class="btn-blue" id="saveSettingsBtn" type="button">Save Settings</button>
+            <button class="btn-gray" id="resetQuestionsBtn" type="button">Reset Default Questions</button>
           </div>
           <div id="settingsMsg"></div>
         </div>
@@ -377,8 +375,8 @@
             </select>
           </div>
           <div class="btns">
-            <button class="btn-green" id="addQuestionBtn">Add New Question</button>
-            <button class="btn-blue" id="updateQuestionBtn">Update Existing Question</button>
+            <button class="btn-green" id="addQuestionBtn" type="button">Add New Question</button>
+            <button class="btn-blue" id="updateQuestionBtn" type="button">Update Existing Question</button>
           </div>
           <div id="questionFormMsg"></div>
         </div>
@@ -425,13 +423,13 @@
       <textarea id="feedbackBox" placeholder="Enter feedback here..."></textarea>
     </div>
     <div class="btns" style="margin-top:14px">
-      <button class="btn-blue" id="finishSessionBtn">Submit Feedback</button>
+      <button class="btn-blue" id="finishSessionBtn" type="button">Submit Feedback</button>
     </div>
   </div>
 </div>
 
 <script>
-questions = shuffleArray(deepClone(loadQuestions()))
+const DEFAULT_QUESTIONS = [
   { id:'Q1',cat:'Timing',text:'What does SDT stand for?',options:['Scheduled Dock Time','Shipment Delivery Target','Scheduled Departure Time'],correctAnswers:[2]},
   { id:'Q2',cat:'Timing',text:'What does CPT mean?',options:['Carrier Processing Time','Critical Pull Time','Container Processing Target'],correctAnswers:[1]},
   { id:'Q3',cat:'Quality',text:'What is FPY (First Pass Yield)?',options:['Speed of loading trailers','Number of drivers per shift','% of packages processed correctly first time (no rework)'],correctAnswers:[2]},
@@ -510,11 +508,20 @@ const DEFAULT_SETTINGS = {
     'RAMOSVGE',
     'ZAPATKAT',
     'ZCERDAAN'
-    'davelldi'
   ]
 };
 
 function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+
+function shuffleArray(array){
+  const arr = Array.isArray(array) ? array : [];
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function loadSettings(){ return JSON.parse(localStorage.getItem('hou2_settings') || JSON.stringify(DEFAULT_SETTINGS)); }
 function saveSettings(settings){ localStorage.setItem('hou2_settings', JSON.stringify(settings)); }
 function loadQuestions(){ return JSON.parse(localStorage.getItem('hou2_questions') || JSON.stringify(DEFAULT_QUESTIONS)); }
@@ -550,11 +557,16 @@ function escapeHtml(value){
 function normalize(v){ return (v || '').trim().toUpperCase(); }
 function byId(id){ return document.getElementById(id); }
 function showOnly(viewId){
-  ['loginView','adminView','examView','thankYouView'].forEach(id => byId(id).classList.add('hidden'));
-  byId(viewId).classList.remove('hidden');
+  ['loginView','adminView','examView','thankYouView'].forEach(id => {
+    const el = byId(id);
+    if(el) el.classList.add('hidden');
+  });
+  const view = byId(viewId);
+  if(view) view.classList.remove('hidden');
 }
 function setMsg(id, text, kind){
   const el = byId(id);
+  if(!el) return;
   if(!text){ el.innerHTML=''; return; }
   el.innerHTML = `<div class="msg ${kind}">${escapeHtml(text)}</div>`;
 }
@@ -597,16 +609,25 @@ function init(){
 }
 
 function bindEvents(){
-  byId('startLoginBtn').addEventListener('click', handleLogin);
-  byId('adminLogoutBtn').addEventListener('click', handleLogout);
-  byId('clearResultsBtn').addEventListener('click', () => {
+  const startLoginBtn = byId('startLoginBtn');
+  const adminLogoutBtn = byId('adminLogoutBtn');
+  const clearResultsBtn = byId('clearResultsBtn');
+  const saveSettingsBtn = byId('saveSettingsBtn');
+  const resetQuestionsBtn = byId('resetQuestionsBtn');
+  const addQuestionBtn = byId('addQuestionBtn');
+  const updateQuestionBtn = byId('updateQuestionBtn');
+  const finishSessionBtn = byId('finishSessionBtn');
+
+  if(startLoginBtn) startLoginBtn.addEventListener('click', handleLogin);
+  if(adminLogoutBtn) adminLogoutBtn.addEventListener('click', handleLogout);
+  if(clearResultsBtn) clearResultsBtn.addEventListener('click', () => {
     if(confirm('Clear all saved results?')){
       saveResults([]);
       refreshAdminView();
     }
   });
-  byId('saveSettingsBtn').addEventListener('click', saveSettingsFromForm);
-  byId('resetQuestionsBtn').addEventListener('click', () => {
+  if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveSettingsFromForm);
+  if(resetQuestionsBtn) resetQuestionsBtn.addEventListener('click', () => {
     if(confirm('Reset question bank to default 44 questions?')){
       questions = deepClone(DEFAULT_QUESTIONS);
       saveQuestions(questions);
@@ -614,14 +635,14 @@ function bindEvents(){
       setMsg('settingsMsg','Question bank reset to default.','ok');
     }
   });
-  byId('addQuestionBtn').addEventListener('click', addQuestionFromForm);
-  byId('updateQuestionBtn').addEventListener('click', updateQuestionFromForm);
-  byId('finishSessionBtn').addEventListener('click', submitFeedbackAndReset);
+  if(addQuestionBtn) addQuestionBtn.addEventListener('click', addQuestionFromForm);
+  if(updateQuestionBtn) updateQuestionBtn.addEventListener('click', updateQuestionFromForm);
+  if(finishSessionBtn) finishSessionBtn.addEventListener('click', submitFeedbackAndReset);
 }
 
 function handleLogin(){
-  const loginId = normalize(byId('loginId').value);
-  const password = byId('loginPassword').value;
+  const loginId = normalize(byId('loginId')?.value);
+  const password = byId('loginPassword')?.value || '';
 
   if(!loginId){
     setMsg('loginMsg','Enter Login ID.','bad');
@@ -655,8 +676,8 @@ function handleLogin(){
 
 function handleLogout(){
   state = createInitialState();
-  byId('loginId').value = '';
-  byId('loginPassword').value = '';
+  if(byId('loginId')) byId('loginId').value = '';
+  if(byId('loginPassword')) byId('loginPassword').value = '';
   showOnly('loginView');
 }
 
@@ -782,8 +803,8 @@ function renderQuestionBank(){
           <div class="small" style="margin-top:6px">${escapeHtml(q.text)}</div>
         </div>
         <div class="btns">
-          <button class="btn-blue" onclick="loadQuestionIntoForm('${escapeHtml(q.id)}')">Load</button>
-          <button class="btn-red" onclick="deleteQuestion('${escapeHtml(q.id)}')">Delete</button>
+          <button class="btn-blue" type="button" onclick="loadQuestionIntoForm('${escapeHtml(q.id)}')">Load</button>
+          <button class="btn-red" type="button" onclick="deleteQuestion('${escapeHtml(q.id)}')">Delete</button>
         </div>
       </div>
     </div>
@@ -826,21 +847,37 @@ function renderResults(){
 }
 
 function startExam(){
+  questions = shuffleArray(deepClone(loadQuestions()));
+  state.qIndex = 0;
+  state.score = 0;
+  state.catMiss = {};
+  state.answers = [];
   showOnly('examView');
   renderQuestion();
 }
 
 function renderQuestion(){
   const q = questions[state.qIndex];
+  if(!q){
+    finishExam();
+    return;
+  }
+
+  let options = q.options.map((opt, i) => ({
+    text: opt,
+    originalIndex: i
+  }));
+  options = shuffleArray(options);
+
   byId('examHeader').textContent = `Associate Test - ${state.loginId}`;
   byId('examMeta').textContent = `Category: ${q.cat}`;
   byId('questionCounter').textContent = `Question ${state.qIndex + 1} / ${questions.length}`;
   byId('progressBar').style.width = `${((state.qIndex + 1) / questions.length) * 100}%`;
   byId('questionText').textContent = `${q.id} - ${q.text}`;
-  byId('questionOptions').innerHTML = q.options.map((opt, i) => `
+  byId('questionOptions').innerHTML = options.map((opt, i) => `
     <label class="option">
-      <input type="radio" name="currentQuestionOption" value="${i}" onchange="submitCurrentAnswer(${i})">
-      <div><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(opt)}</div>
+      <input type="radio" name="currentQuestionOption" value="${opt.originalIndex}" onchange="submitCurrentAnswer(${opt.originalIndex})">
+      <div><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(opt.text)}</div>
     </label>
   `).join('');
 }
@@ -958,9 +995,9 @@ function startSystem(){
   if(introHasStarted) return;
   introHasStarted = true;
 
-  const intro = byId('introScreen');
-  const loading = byId('loadingScreen');
-  const appRoot = byId('appRoot');
+  const intro = document.getElementById('introScreen');
+  const loading = document.getElementById('loadingScreen');
+  const appRoot = document.getElementById('appRoot');
 
   if(intro){
     intro.style.animation = 'fadeOut 0.8s forwards';
@@ -968,46 +1005,53 @@ function startSystem(){
 
   setTimeout(() => {
     if(intro && intro.parentNode) intro.remove();
-    loading.classList.remove('hidden');
+    if(loading) loading.classList.remove('hidden');
 
     setTimeout(() => {
-      loading.style.animation = 'fadeOut 0.8s forwards';
+      if(loading) loading.style.animation = 'fadeOut 0.8s forwards';
 
       setTimeout(() => {
         if(loading && loading.parentNode) loading.remove();
-        appRoot.classList.remove('hidden');
+        if(appRoot) appRoot.classList.remove('hidden');
       }, 800);
     }, 1500);
   }, 800);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('enterBtn').addEventListener('click', startSystem);
-});
-setTimeout(() => {
-  if(document.getElementById('introScreen')) startSystem();
-}, 3000);
-
 window.loadQuestionIntoForm = loadQuestionIntoForm;
 window.deleteQuestion = deleteQuestion;
 window.submitCurrentAnswer = submitCurrentAnswer;
 
-try{
-  init();
-}catch(error){
-  const appRoot = byId('appRoot');
-  if(appRoot){
-    appRoot.classList.remove('hidden');
-    appRoot.innerHTML = `<div class="card"><h2>Configuration Error</h2><div class="msg bad">${escapeHtml(error.message)}</div></div>`;
-  } else {
-    document.body.innerHTML = `<div class="wrap"><div class="card"><h2>Configuration Error</h2><div class="msg bad">${escapeHtml(error.message)}</div></div></div>`;
+document.addEventListener('DOMContentLoaded', () => {
+  try{
+    init();
+  }catch(error){
+    const appRoot = document.getElementById('appRoot');
+    if(appRoot){
+      appRoot.classList.remove('hidden');
+      appRoot.innerHTML = `<div class="card"><h2>Configuration Error</h2><div class="msg bad">${escapeHtml(error.message)}</div></div>`;
+    } else {
+      document.body.innerHTML = `<div class="wrap"><div class="card"><h2>Configuration Error</h2><div class="msg bad">${escapeHtml(error.message)}</div></div></div>`;
+    }
+    const intro = document.getElementById('introScreen');
+    const loading = document.getElementById('loadingScreen');
+    if(intro) intro.remove();
+    if(loading) loading.remove();
+    console.error(error);
+    return;
   }
-  const intro = byId('introScreen');
-  const loading = byId('loadingScreen');
-  if(intro) intro.remove();
-  if(loading) loading.remove();
-  console.error(error);
-}
+
+  const enterBtn = document.getElementById('enterBtn');
+  if(enterBtn){
+    enterBtn.addEventListener('click', startSystem);
+  }
+
+  setTimeout(() => {
+    if(document.getElementById('introScreen')){
+      startSystem();
+    }
+  }, 3000);
+});
 </script>
 </body>
 </html>
