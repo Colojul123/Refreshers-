@@ -985,7 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('enterBtn').addEventListener('click', startSystem);
 });
 setTimeout(() => {
-  if(byId('introScreen')) startSystem();
+  if(document.getElementById('introScreen')) startSystem();
 }, 3000);
 
 window.loadQuestionIntoForm = loadQuestionIntoForm;
