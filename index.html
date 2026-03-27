@@ -431,7 +431,7 @@
 </div>
 
 <script>
-const DEFAULT_QUESTIONS = [
+questions = shuffleArray(deepClone(loadQuestions()));
   { id:'Q1',cat:'Timing',text:'What does SDT stand for?',options:['Scheduled Dock Time','Shipment Delivery Target','Scheduled Departure Time'],correctAnswers:[2]},
   { id:'Q2',cat:'Timing',text:'What does CPT mean?',options:['Carrier Processing Time','Critical Pull Time','Container Processing Target'],correctAnswers:[1]},
   { id:'Q3',cat:'Quality',text:'What is FPY (First Pass Yield)?',options:['Speed of loading trailers','Number of drivers per shift','% of packages processed correctly first time (no rework)'],correctAnswers:[2]},
